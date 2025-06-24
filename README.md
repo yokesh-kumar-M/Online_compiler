@@ -13,16 +13,17 @@ A simple web-based code compiler using Django and Python. Users can input Python
 ---
 
 ## 📁 Project Structure
-├── compiler/ # Django app
-│ ├── templates/
-│ │ └── index.html
-│ ├── views.py
-│ ├── urls.py
-├── online_compiler/ # Django project settings
-│ ├── settings.py
-│ └── urls.py
-├── manage.py
-└── .gitignore
+
+ ├── compiler/ # Django app
+ │ ├── templates/
+ │ │ └── index.html
+ │ ├── views.py
+ │ ├── urls.py
+ ├── online_compiler/ # Django project settings
+ │ ├── settings.py
+ │ └── urls.py
+ ├── manage.py
+ └── .gitignore
 
 ---
 
