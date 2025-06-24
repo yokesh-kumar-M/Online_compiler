@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Online Compiler</title>
+    <script>
+        function runCode() {
+            const code = document.getElementById("code").value;
+
+            fetch("/run/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": getCookie('csrftoken')
+                },
+                body: "code=" + encodeURIComponent(code)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("output").innerText = data.output;
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</head>
+<body>
+    <h1>Online Python Compiler</h1>
+    <textarea id="code" rows="10" cols="50" placeholder="Write your Python code here..."></textarea><br>
+    <button onclick="runCode()">Run</button>
+    <h2>Output:</h2>
+    <pre id="output"></pre>
+</body>
+</html>
