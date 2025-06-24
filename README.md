@@ -12,7 +12,7 @@ A simple web-based code compiler using Django and Python. Users can input Python
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
  ├── compiler/ # Django app
  │ ├── templates/
@@ -27,7 +27,7 @@ A simple web-based code compiler using Django and Python. Users can input Python
 
 ---
 
-## 🚀 How to Run Locally
+## How to Run Locally
 
 ```bash
 # 1. Clone the repository
