@@ -1,32 +1,519 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Online Compiler</title>
-    <script>
-        function runCode() {
-            const code = document.getElementById("code").value;
-
-            fetch("/run/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-CSRFToken": getCookie('csrftoken')
-                },
-                body: "code=" + encodeURIComponent(code)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("output").innerText = data.output;
-            });
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Online Compiler</title>
+    
+    <!-- Monaco Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .compiler-interface {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 600px;
+        }
+        
+        .editor-section {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .toolbar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .toolbar button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .toolbar button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .toolbar button.success {
+            background: #28a745;
+        }
+        
+        .toolbar button.success:hover {
+            background: #1e7e34;
+        }
+        
+        .toolbar button.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .toolbar button.warning:hover {
+            background: #e0a800;
+        }
+        
+        .toolbar button.info {
+            background: #17a2b8;
+        }
+        
+        .toolbar button.info:hover {
+            background: #138496;
+        }
+        
+        .toolbar select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .editor-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #editor {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+        }
+        
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+        
+        .output-header {
+            background: #343a40;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .output-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+        
+        .output-display {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            min-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .output-display.error {
+            background: #742a2a;
+            color: #fed7d7;
+        }
+        
+        .output-display.success {
+            background: #22543d;
+            color: #c6f6d5;
+        }
+        
+        .status-bar {
+            background: #e9ecef;
+            padding: 8px 15px;
+            font-size: 12px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .examples-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .examples-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .examples-content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .examples-list {
+            list-style: none;
+        }
+        
+        .examples-list li {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .examples-list li:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+        }
+        
+        .example-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .example-description {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+        
+        .notification.info {
+            background: #17a2b8;
+        }
+        
+        @media (max-width: 768px) {
+            .compiler-interface {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .editor-section {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .toolbar {
+                flex-wrap: wrap;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-code"></i>Python Online Compiler</h1>
+            <p>Write, compile, and run Python code in your browser with advanced features</p>
+        </div>
+        
+        <div class="compiler-interface">
+            <div class="editor-section">
+                <div class="toolbar">
+                    <button onclick="runCode()" class="success">
+                        <i class="fas fa-play"></i> Run Code
+                    </button>
+                    <button onclick="validateCode()" class="warning">
+                        <i class="fas fa-check"></i> Validate
+                    </button>
+                    <button onclick="clearEditor()">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                    <button onclick="showExamples()" class="info">
+                        <i class="fas fa-book"></i> Examples
+                    </button>
+                    <button onclick="saveCode()">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button onclick="loadCode()">
+                        <i class="fas fa-folder-open"></i> Load
+                    </button>
+                    <select id="executionMode">
+                        <option value="safe">Safe Mode</option>
+                        <option value="subprocess">Subprocess Mode</option>
+                    </select>
+                </div>
+                
+                <div class="editor-container">
+                    <div id="editor"></div>
+                </div>
+                
+                <div class="status-bar">
+                    <span id="statusText">Ready</span> |
+                    <span id="lineColumn">Line 1, Column 1</span> |
+                    <span id="codeLength">0 characters</span>
+                </div>
+            </div>
+            
+            <div class="output-section">
+                <div class="output-header">
+                    <i class="fas fa-terminal"></i>
+                    <span>Output</span>
+                    <button onclick="clearOutput()" style="margin-left: auto; background: transparent; border: 1px solid #6c757d; color: #6c757d; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+                
+                <div class="output-content">
+                    <div class="loading" id="loadingIndicator">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Executing code...</p>
+                    </div>
+                    
+                    <div class="output-display" id="output">
+                        Welcome to Advanced Python Online Compiler!
+                        
+                        Features:
+                        • Monaco Editor with syntax highlighting
+                        • Code validation and error detection
+                        • Safe execution environment
+                        • Code examples and templates
+                        • Save/Load functionality
+                        • Real-time status updates
+                        
+                        Write your Python code and click "Run Code" to execute it.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Examples Modal -->
+    <div class="examples-modal" id="examplesModal">
+        <div class="examples-content">
+            <h2>Code Examples</h2>
+            <ul class="examples-list" id="examplesList">
+                <!-- Examples will be loaded here -->
+            </ul>
+            <button onclick="closeExamples()" style="float: right; margin-top: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Close
+            </button>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        let editor;
+        let currentFileName = 'untitled.py';
+        
+        // Initialize Monaco Editor
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: `# Welcome to Advanced Python Online Compiler!
+# Write your Python code here and click "Run Code" to execute it.
 
+def greet(name):
+    return f"Hello, {name}!"
+
+# Example usage
+names = ["Alice", "Bob", "Charlie"]
+for name in names:
+    print(greet(name))
+    
+# Try some math operations
+print(f"The sum of 1 to 10 is: {sum(range(1, 11))}")
+`,
+                language: 'python',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                lineNumbers: 'on',
+                wordWrap: 'on',
+                minimap: { enabled: true },
+                scrollBeyondLastLine: false,
+                renderLineHighlight: 'all',
+                selectionHighlight: true,
+                contextmenu: true,
+                mouseWheelZoom: true,
+                cursorBlinking: 'blink',
+                cursorSmoothCaretAnimation: true,
+                smoothScrolling: true,
+                folding: true,
+                foldingStrategy: 'indentation',
+                showFoldingControls: 'always',
+                unfoldOnClickAfterEndOfLine: true,
+                dragAndDrop: true,
+                linkedEditing: true,
+                matchBrackets: 'always',
+                autoIndent: 'advanced',
+                formatOnPaste: true,
+                formatOnType: true,
+                tabCompletion: 'on',
+                wordBasedSuggestions: true,
+                parameterHints: { enabled: true },
+                quickSuggestions: { other: true, comments: true, strings: true },
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnEnter: 'on',
+                acceptSuggestionOnCommitCharacter: true,
+                snippetSuggestions: 'inline',
+                emptySelectionClipboard: false,
+                copyWithSyntaxHighlighting: true,
+                useTabStops: true,
+                multiCursorModifier: 'ctrlCmd',
+                accessibilitySupport: 'auto',
+                find: {
+                    seedSearchStringFromSelection: true,
+                    autoFindInSelection: 'never',
+                    addExtraSpaceOnTop: true,
+                    loop: true
+                }
+            });
+            
+            // Update status bar
+            editor.onDidChangeCursorPosition(function (e) {
+                document.getElementById('lineColumn').textContent = `Line ${e.position.lineNumber}, Column ${e.position.column}`;
+            });
+            
+            editor.onDidChangeModelContent(function (e) {
+                const content = editor.getValue();
+                document.getElementById('codeLength').textContent = `${content.length} characters`;
+                updateStatus('Modified');
+            });
+            
+            // Auto-save to session storage
+            editor.onDidChangeModelContent(function (e) {
+                setTimeout(() => {
+                    const content = editor.getValue();
+                    try {
+                        // Note: We're using a simple variable instead of localStorage
+                        window.autoSavedCode = content;
+                    } catch (e) {
+                        console.warn('Auto-save failed:', e);
+                    }
+                }, 1000);
+            });
+        });
+        
+        function updateStatus(status) {
+            document.getElementById('statusText').textContent = status;
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
         function getCookie(name) {
             let cookieValue = null;
-            if (document.cookie && document.cookie !== "") {
-                const cookies = document.cookie.split(";");
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
                 for (let i = 0; i < cookies.length; i++) {
                     const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
                         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                         break;
                     }
@@ -34,13 +521,276 @@
             }
             return cookieValue;
         }
+        
+        async function runCode() {
+            const code = editor.getValue().trim();
+            
+            if (!code) {
+                showNotification('Please write some code first!', 'error');
+                return;
+            }
+            
+            const output = document.getElementById('output');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const executionMode = document.getElementById('executionMode').value;
+            
+            // Show loading
+            loadingIndicator.classList.add('active');
+            output.style.display = 'none';
+            updateStatus('Running...');
+            
+            try {
+                const response = await fetch('/run/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: `code=${encodeURIComponent(code)}&mode=${executionMode}`
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                loadingIndicator.classList.remove('active');
+                output.style.display = 'block';
+                
+                if (data.success) {
+                    output.textContent = data.output || 'Code executed successfully (no output)';
+                    output.className = 'output-display success';
+                    updateStatus('Execution completed');
+                    showNotification('Code executed successfully!', 'success');
+                } else {
+                    output.textContent = data.error || 'Unknown error occurred';
+                    output.className = 'output-display error';
+                    updateStatus('Execution failed');
+                    showNotification('Code execution failed!', 'error');
+                }
+                
+            } catch (error) {
+                loadingIndicator.classList.remove('active');
+                output.style.display = 'block';
+                output.textContent = `Network Error: ${error.message}`;
+                output.className = 'output-display error';
+                updateStatus('Network error');
+                showNotification('Network error occurred!', 'error');
+            }
+        }
+        
+        async function validateCode() {
+            const code = editor.getValue().trim();
+            
+            if (!code) {
+                showNotification('No code to validate!', 'error');
+                return;
+            }
+            
+            updateStatus('Validating...');
+            
+            try {
+                const response = await fetch('/validate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: `code=${encodeURIComponent(code)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.valid) {
+                    updateStatus('Code is valid');
+                    showNotification('Code validation passed!', 'success');
+                } else {
+                    updateStatus('Validation failed');
+                    showNotification(`Validation failed: ${data.message}`, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Validation error');
+                showNotification('Validation error occurred!', 'error');
+            }
+        }
+        
+        function clearEditor() {
+            if (confirm('Are you sure you want to clear the editor?')) {
+                editor.setValue('');
+                updateStatus('Editor cleared');
+                showNotification('Editor cleared!', 'info');
+            }
+        }
+        
+        function clearOutput() {
+            const output = document.getElementById('output');
+            output.textContent = 'Output cleared. Run your code to see results here.';
+            output.className = 'output-display';
+            updateStatus('Output cleared');
+        }
+        
+        async function showExamples() {
+            const modal = document.getElementById('examplesModal');
+            const examplesList = document.getElementById('examplesList');
+            
+            try {
+                const response = await fetch('/examples/');
+                const data = await response.json();
+                
+                if (data.success) {
+                    examplesList.innerHTML = '';
+                    
+                    Object.keys(data.examples).forEach(key => {
+                        const example = data.examples[key];
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <div class="example-title">${example.title}</div>
+                            <div class="example-description">Click to load this example</div>
+                        `;
+                        listItem.onclick = () => loadExample(example.code);
+                        examplesList.appendChild(listItem);
+                    });
+                    
+                    modal.classList.add('active');
+                } else {
+                    showNotification('Failed to load examples!', 'error');
+                }
+                
+            } catch (error) {
+                showNotification('Error loading examples!', 'error');
+            }
+        }
+        
+        function loadExample(code) {
+            editor.setValue(code);
+            closeExamples();
+            updateStatus('Example loaded');
+            showNotification('Example loaded successfully!', 'success');
+        }
+        
+        function closeExamples() {
+            document.getElementById('examplesModal').classList.remove('active');
+        }
+        
+        async function saveCode() {
+            const code = editor.getValue().trim();
+            
+            if (!code) {
+                showNotification('No code to save!', 'error');
+                return;
+            }
+            
+            const filename = prompt('Enter filename:', currentFileName) || currentFileName;
+            
+            try {
+                const response = await fetch('/save/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: `code=${encodeURIComponent(code)}&filename=${encodeURIComponent(filename)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentFileName = filename;
+                    updateStatus('Code saved');
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification('Failed to save code!', 'error');
+                }
+                
+            } catch (error) {
+                showNotification('Error saving code!', 'error');
+            }
+        }
+        
+        async function loadCode() {
+            try {
+                // First get list of saved files
+                const response = await fetch('/list-saved/');
+                const data = await response.json();
+                
+                if (data.success && data.files.length > 0) {
+                    const filename = prompt('Available files:\n' + data.files.join('\n') + '\n\nEnter filename to load:');
+                    
+                    if (filename) {
+                        const loadResponse = await fetch('/load/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: `filename=${encodeURIComponent(filename)}`
+                        });
+                        
+                        const loadData = await loadResponse.json();
+                        
+                        if (loadData.success) {
+                            editor.setValue(loadData.code);
+                            currentFileName = filename;
+                            updateStatus('Code loaded');
+                            showNotification('Code loaded successfully!', 'success');
+                        } else {
+                            showNotification(loadData.message, 'error');
+                        }
+                    }
+                } else {
+                    showNotification('No saved files found!', 'info');
+                }
+                
+            } catch (error) {
+                showNotification('Error loading code!', 'error');
+            }
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'Enter':
+                        e.preventDefault();
+                        runCode();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        saveCode();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        loadCode();
+                        break;
+                    case 'l':
+                        e.preventDefault();
+                        clearEditor();
+                        break;
+                }
+            }
+            
+            if (e.key === 'F5') {
+                e.preventDefault();
+                runCode();
+            }
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('examplesModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeExamples();
+            }
+        });
+        
+        // Initialize
+        updateStatus('Ready');
+        
+        // Load auto-saved code if available
+        window.addEventListener('load', function() {
+            if (window.autoSavedCode) {
+                editor.setValue(window.autoSavedCode);
+                showNotification('Auto-saved code restored!', 'info');
+            }
+        });
     </script>
-</head>
-<body>
-    <h1>Online Python Compiler</h1>
-    <textarea id="code" rows="10" cols="50" placeholder="Write your Python code here..."></textarea><br>
-    <button onclick="runCode()">Run</button>
-    <h2>Output:</h2>
-    <pre id="output"></pre>
 </body>
 </html>

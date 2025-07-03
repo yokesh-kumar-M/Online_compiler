@@ -1,0 +1,30 @@
+# Core Django framework
+Django==5.2.3
+
+# Database
+psycopg2-binary==2.9.9  # PostgreSQL adapter (optional)
+
+# Security
+django-cors-headers==4.3.1  # CORS handling
+django-ratelimit==4.1.0     # Rate limiting
+
+# Development tools
+django-debug-toolbar==4.2.0  # Debug toolbar for development
+
+# Production server
+gunicorn==21.2.0         # WSGI server for production
+whitenoise==6.6.0        # Static file serving
+
+# Code quality
+black==23.12.1           # Code formatter
+flake8==6.1.0           # Code linter
+isort==5.13.2           # Import sorter
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
