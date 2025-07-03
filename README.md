@@ -1,9 +1,9 @@
 
-Python Online Compiler
+# Python Online Compiler
 A sophisticated web-based Python compiler built with Django that provides a secure, feature-rich environment for writing, testing, and executing Python code directly in the browser.
 
-✨ Features
-🔧 Core Functionality
+# Features
+# 🔧 Core Functionality
 Real-time Code Execution: Execute Python code with instant results
 Advanced Code Editor: Monaco Editor with syntax highlighting, auto-completion, and error detection
 Dual Execution Modes:
@@ -11,19 +11,19 @@ Safe Mode: Controlled execution environment
 Subprocess Mode: Traditional subprocess execution
 Code Validation: Pre-execution syntax and security validation
 Session Management: Save and load code snippets within sessions
-🛡️ Security Features
+# 🛡️ Security Features
 Sandboxed Execution: Restricted imports and dangerous function blocking
 Timeout Protection: Automatic termination of long-running code
 Output Limiting: Prevents memory overflow from excessive output
 Input Sanitization: Comprehensive validation of user input
 CSRF Protection: Built-in Django CSRF protection
-🎨 User Interface
+# 🎨 User Interface
 Modern Design: Clean, responsive interface with gradient backgrounds
 Split Layout: Side-by-side code editor and output display
 Dark Theme: Easy-on-the-eyes Monaco editor with dark theme
 Real-time Status: Live updates of execution status and cursor position
 Keyboard Shortcuts: Quick access to common functions
-📚 Additional Features
+# 📚 Additional Features
 Code Examples: Built-in library of Python examples and tutorials
 Auto-save: Automatic saving of code during editing
 Clear Functions: Easy clearing of editor and output
@@ -69,11 +69,11 @@ bash
 python manage.py runserver
 Visit http://localhost:8000 in your browser to access the compiler.
 
-🔧 Configuration
+# 🔧 Configuration
 Environment Variables
 Create a .env file in the project root:
 
-env
+# env
 DEBUG=True
 SECRET_KEY=your-secret-key-here
 ALLOWED_HOSTS=localhost,127.0.0.1
@@ -81,32 +81,32 @@ DATABASE_URL=sqlite:///db.sqlite3
 Security Settings
 For production deployment, update settings.py:
 
-python
+# python
 DEBUG = False
 ALLOWED_HOSTS = ['your-domain.com']
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-📖 Usage
-Basic Usage
+# 📖 Usage
+# Basic Usage
 Write Code: Enter your Python code in the Monaco editor
 Run Code: Click "Run Code" button or press Ctrl+Enter
 View Output: Results appear in the output panel
 Save Code: Use "Save" button to store code in session
 Load Examples: Browse built-in examples for learning
-Keyboard Shortcuts
+# Keyboard Shortcuts
 Ctrl+Enter / Cmd+Enter: Run code
 Ctrl+S / Cmd+S: Save code
 Ctrl+O / Cmd+O: Load code
 Ctrl+L / Cmd+L: Clear editor
 F5: Run code
-Code Examples Available
+# Code Examples Available
 Hello World: Basic Python syntax
 Fibonacci Sequence: Recursive functions
 Data Structures: Lists, dictionaries, sets
 Sorting Algorithms: Algorithm implementations
 
-🏗️ Project Structure
+# 🏗️ Project Structure
 
 ``` bash
 online_compiler/
@@ -129,7 +129,7 @@ online_compiler/
 └── README.md              # This file
 ```
 
-🔒 Security Considerations
+# 🔒 Security Considerations
 Implemented Security Measures
 Restricted Imports: Blocks dangerous modules like os, subprocess, sys
 Function Filtering: Prevents execution of eval, exec, compile
@@ -145,7 +145,7 @@ Set up proper logging and monitoring
 Use a reverse proxy (nginx)
 Configure firewall rules
 Regular security updates
-🚀 Deployment
+# 🚀 Deployment
 Using Gunicorn (Production)
 bash
 # Install gunicorn
@@ -157,11 +157,11 @@ Using Docker
 dockerfile
 FROM python:3.9-slim
 
-WORKDIR /app
+# WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . .
+# COPY . .
 RUN python manage.py collectstatic --noinput
 
 CMD ["gunicorn", "online_compiler.wsgi:application", "--bind", "0.0.0.0:8000"]
@@ -172,7 +172,7 @@ SECRET_KEY=your-production-secret-key
 ALLOWED_HOSTS=your-domain.com
 DATABASE_URL=postgresql://user:password@localhost/dbname
 🧪 Testing
-Run Tests
+# Run Tests
 bash
 # Run all tests
 python manage.py test
@@ -202,19 +202,19 @@ Follow PEP 8 for Python code
 Use Black for code formatting
 Add docstrings for all functions
 Include type hints where appropriate
-📝 License
+# 📝 License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-🙏 Acknowledgments
+# 🙏 Acknowledgments
 Django: Web framework
 Monaco Editor: Code editor component
 Font Awesome: Icons
 Bootstrap: CSS framework inspiration
 Python Community: For the amazing language
-📞 Support
+# 📞 Support
 For support, email support@yourcompiler.com or create an issue on GitHub.
 
-🔮 Future Enhancements
+# 🔮 Future Enhancements
 Planned Features
  Multi-language support (JavaScript, Java, C++)
  User authentication and profiles
