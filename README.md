@@ -1,5 +1,5 @@
-<<<<<<< HEAD
-Advanced Python Online Compiler
+
+Python Online Compiler
 A sophisticated web-based Python compiler built with Django that provides a secure, feature-rich environment for writing, testing, and executing Python code directly in the browser.
 
 ✨ Features
