@@ -102,7 +102,10 @@ Hello World: Basic Python syntax
 Fibonacci Sequence: Recursive functions
 Data Structures: Lists, dictionaries, sets
 Sorting Algorithms: Algorithm implementations
+
 🏗️ Project Structure
+
+``` bash
 online_compiler/
 ├── compiler/                 # Main Django app
 │   ├── templates/           # HTML templates
@@ -121,6 +124,8 @@ online_compiler/
 ├── requirements.txt        # Python dependencies
 ├── manage.py              # Django management
 └── README.md              # This file
+```
+
 🔒 Security Considerations
 Implemented Security Measures
 Restricted Imports: Blocks dangerous modules like os, subprocess, sys
