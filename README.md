@@ -29,6 +29,8 @@ Auto-save: Automatic saving of code during editing
 Clear Functions: Easy clearing of editor and output
 Responsive Design: Works seamlessly on desktop and mobile devices
 Error Handling: Comprehensive error reporting and user feedback
+
+```bash
 🚀 Installation
 Prerequisites
 Python 3.8 or higher
@@ -36,11 +38,12 @@ pip (Python package manager)
 Git
 Step 1: Clone the Repository
 bash
-git clone https://github.com/yourusername/online-compiler.git
+git clone https://github.com/yokesh-kumar-M/Online_compiler
 cd online-compiler
 Step 2: Create Virtual Environment
 bash
 python -m venv venv
+```
 
 # On Windows
 venv\Scripts\activate
