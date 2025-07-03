@@ -229,7 +229,7 @@ Performance Improvements
  Load balancing support
  Database optimization
  CDN integration for static files
-Made with ❤️ by [Your Name]
+Made with efforts by Yokesh Kumar
 
 Happy Coding! 🐍
 
