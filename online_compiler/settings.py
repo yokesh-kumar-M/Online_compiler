@@ -11,6 +11,18 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-secret-key-not-for-product
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Render.com sets RENDER=true
+RENDER = os.environ.get('RENDER', 'false').lower() in ('true', '1', 'yes')
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# CSRF trusted origins for Render / custom domains
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS if o.strip()]
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+
 # =============================================================================
 # APPLICATION DEFINITION
 # =============================================================================
@@ -75,42 +87,66 @@ WSGI_APPLICATION = 'online_compiler.wsgi.application'
 ASGI_APPLICATION = 'online_compiler.asgi.application'
 
 # =============================================================================
-# DATABASE - PostgreSQL
+# DATABASE - PostgreSQL (supports DATABASE_URL for Render/Heroku)
 # =============================================================================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'online_compiler'),
-        'USER': os.environ.get('POSTGRES_USER', 'compiler_admin'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'devpassword123'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
-        'CONN_MAX_AGE': 600,
-        'OPTIONS': {
-            'connect_timeout': 10,
-        },
+import dj_database_url
+
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', 'online_compiler'),
+            'USER': os.environ.get('POSTGRES_USER', 'compiler_admin'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'devpassword123'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+            'CONN_MAX_AGE': 600,
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
+        }
+    }
 
 # =============================================================================
-# CACHE - Redis
+# CACHE - Redis (with fallback to local memory cache)
 # =============================================================================
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
-            'CONNECTION_POOL_KWARGS': {'max_connections': 50},
-        },
-        'KEY_PREFIX': 'compiler',
-        'TIMEOUT': 300,
-    }
-}
+REDIS_URL = os.environ.get('REDIS_URL', '')
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+                'CONNECTION_POOL_KWARGS': {'max_connections': 50},
+            },
+            'KEY_PREFIX': 'compiler',
+            'TIMEOUT': 300,
+        }
+    }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
+else:
+    # Fallback for Render free tier (no Redis addon) or local dev
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'compiler-cache',
+        }
+    }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # =============================================================================
 # AUTH & PASSWORD VALIDATION
@@ -209,9 +245,9 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # =============================================================================
-# CELERY
+# CELERY (requires Redis - disabled gracefully if not available)
 # =============================================================================
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/1')
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL or 'redis://localhost:6379/1')
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'default'
 CELERY_ACCEPT_CONTENT = ['json']
@@ -238,7 +274,11 @@ SPECTACULAR_SETTINGS = {
 # =============================================================================
 # EXECUTOR MICROSERVICE
 # =============================================================================
-EXECUTOR_SERVICE_URL = os.environ.get('EXECUTOR_SERVICE_URL', 'http://localhost:8001')
+_executor_url = os.environ.get('EXECUTOR_SERVICE_URL', 'http://localhost:8001')
+# Render provides host:port — ensure it has http:// prefix
+if _executor_url and not _executor_url.startswith('http'):
+    _executor_url = f'https://{_executor_url}' if RENDER else f'http://{_executor_url}'
+EXECUTOR_SERVICE_URL = _executor_url
 EXECUTOR_API_KEY = os.environ.get('EXECUTOR_API_KEY', 'dev-executor-api-key')
 CODE_EXECUTION_TIMEOUT = int(os.environ.get('CODE_EXECUTION_TIMEOUT', 10))
 MAX_OUTPUT_SIZE = int(os.environ.get('MAX_OUTPUT_SIZE', 10000))
@@ -275,7 +315,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY SETTINGS (Production)
 # =============================================================================
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -285,76 +324,88 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Render terminates SSL at the load balancer, so don't redirect internally
+    if RENDER:
+        SECURE_SSL_REDIRECT = False  # Render handles HTTPS redirect at edge
+    else:
+        SECURE_SSL_REDIRECT = True
 
 # =============================================================================
 # LOGGING
 # =============================================================================
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
-os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+if RENDER:
+    # Cloud: Console-only logging (Render captures stdout)
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {message}',
+                'style': '{',
+            },
         },
-        'json': {
-            'format': '%(message)s',
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose',
+            },
         },
-    },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
+        'loggers': {
+            'django': {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': True},
+            'compiler': {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': False},
+            'accounts': {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': False},
+            'django.security': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
         },
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+    }
+else:
+    os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+                'style': '{',
+            },
         },
-        'file': {
-            'level': LOG_LEVEL,
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'app.log'),
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 10,
-            'formatter': 'verbose',
+        'filters': {
+            'require_debug_false': {
+                '()': 'django.utils.log.RequireDebugFalse',
+            },
         },
-        'security_file': {
-            'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
-            'maxBytes': 10485760,
-            'backupCount': 10,
-            'formatter': 'verbose',
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose',
+            },
+            'file': {
+                'level': LOG_LEVEL,
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.path.join(BASE_DIR, 'logs', 'app.log'),
+                'maxBytes': 10485760,
+                'backupCount': 10,
+                'formatter': 'verbose',
+            },
+            'security_file': {
+                'level': 'WARNING',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
+                'maxBytes': 10485760,
+                'backupCount': 10,
+                'formatter': 'verbose',
+            },
         },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': LOG_LEVEL,
-            'propagate': True,
+        'loggers': {
+            'django': {'handlers': ['console', 'file'], 'level': LOG_LEVEL, 'propagate': True},
+            'compiler': {'handlers': ['console', 'file'], 'level': 'DEBUG' if DEBUG else LOG_LEVEL, 'propagate': False},
+            'accounts': {'handlers': ['console', 'file', 'security_file'], 'level': 'DEBUG' if DEBUG else LOG_LEVEL, 'propagate': False},
+            'django.security': {'handlers': ['security_file', 'console'], 'level': 'WARNING', 'propagate': False},
         },
-        'compiler': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG' if DEBUG else LOG_LEVEL,
-            'propagate': False,
-        },
-        'accounts': {
-            'handlers': ['console', 'file', 'security_file'],
-            'level': 'DEBUG' if DEBUG else LOG_LEVEL,
-            'propagate': False,
-        },
-        'django.security': {
-            'handlers': ['security_file', 'console'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-    },
-}
+    }
 
 # =============================================================================
 # GITHUB & GOOGLE OAUTH SETTINGS

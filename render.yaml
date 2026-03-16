@@ -1,0 +1,81 @@
+# =============================================================================
+# Render Blueprint - Online Compiler Enterprise
+# Deploy: Connect GitHub repo -> Render auto-detects this file
+# Docs: https://render.com/docs/blueprint-spec
+# =============================================================================
+
+databases:
+  - name: online-compiler-db
+    plan: free
+    databaseName: online_compiler
+    user: compiler_admin
+    region: oregon
+
+services:
+  # -------------------------------------------------------------------------
+  # Django Gateway (Main Web Service)
+  # -------------------------------------------------------------------------
+  - type: web
+    name: online-compiler-gateway
+    plan: free
+    runtime: python
+    region: oregon
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn online_compiler.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120 --access-logfile - --error-logfile -"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com,localhost"
+      - key: RENDER
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: online-compiler-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: EXECUTOR_API_KEY
+        generateValue: true
+      - key: EXECUTOR_SERVICE_URL
+        fromService:
+          name: online-compiler-executor
+          type: web
+          property: hostport
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: LOG_LEVEL
+        value: "WARNING"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://online-compiler-gateway.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://online-compiler-gateway.onrender.com"
+    healthCheckPath: /health/
+    autoDeploy: true
+
+  # -------------------------------------------------------------------------
+  # FastAPI Executor Microservice
+  # -------------------------------------------------------------------------
+  - type: web
+    name: online-compiler-executor
+    plan: free
+    runtime: docker
+    region: oregon
+    dockerfilePath: ./services/executor/Dockerfile
+    dockerContext: ./services/executor
+    envVars:
+      - key: EXECUTOR_API_KEY
+        fromService:
+          name: online-compiler-gateway
+          type: web
+          envVarKey: EXECUTOR_API_KEY
+      - key: CODE_EXECUTION_TIMEOUT
+        value: "10"
+      - key: MAX_OUTPUT_SIZE
+        value: "10000"
+      - key: LOG_LEVEL
+        value: "WARNING"
+    healthCheckPath: /health
+    autoDeploy: true

@@ -16,6 +16,7 @@ redis>=5.0,<8.0
 requests>=2.32,<3.0
 gunicorn>=22.0,<26.0
 python-dotenv>=1.0,<2.0
+dj-database-url>=2.1,<3.0
 
 # Testing
 pytest>=8.0
