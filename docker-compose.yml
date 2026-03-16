@@ -1,0 +1,176 @@
+# =============================================================================
+# Online Compiler Enterprise - Docker Compose (Production)
+# Microservices: Gateway, Executor, PostgreSQL, Redis, Celery, Nginx
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: compiler-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-online_compiler}
+      POSTGRES_USER: ${POSTGRES_USER:-compiler_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-compiler_admin} -d ${POSTGRES_DB:-online_compiler}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - compiler-network
+
+  # ---------------------------------------------------------------------------
+  # Redis (Cache, Sessions, Celery Broker)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: compiler-redis
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - compiler-network
+
+  # ---------------------------------------------------------------------------
+  # Gateway Service (Django + DRF)
+  # ---------------------------------------------------------------------------
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: compiler-gateway
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=online_compiler.settings
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+      - gateway_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - compiler-network
+
+  # ---------------------------------------------------------------------------
+  # Code Executor Microservice (FastAPI)
+  # ---------------------------------------------------------------------------
+  executor:
+    build:
+      context: ./services/executor
+      dockerfile: Dockerfile
+    container_name: compiler-executor
+    restart: always
+    environment:
+      - EXECUTOR_API_KEY=${EXECUTOR_API_KEY:-dev-executor-api-key}
+      - CODE_EXECUTION_TIMEOUT=${CODE_EXECUTION_TIMEOUT:-10}
+      - MAX_OUTPUT_SIZE=${MAX_OUTPUT_SIZE:-10000}
+      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
+    # Security: limit resources for code execution
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    networks:
+      - compiler-network
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker (Async Tasks)
+  # ---------------------------------------------------------------------------
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: compiler-celery-worker
+    restart: always
+    env_file:
+      - .env
+    command: celery -A online_compiler worker -l info --concurrency=4
+    volumes:
+      - gateway_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - compiler-network
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat (Scheduled Tasks)
+  # ---------------------------------------------------------------------------
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: compiler-celery-beat
+    restart: always
+    env_file:
+      - .env
+    command: celery -A online_compiler beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - gateway_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - compiler-network
+
+  # ---------------------------------------------------------------------------
+  # Nginx Reverse Proxy
+  # ---------------------------------------------------------------------------
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: compiler-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_files:/app/staticfiles:ro
+      - media_files:/app/media:ro
+    depends_on:
+      - gateway
+      - executor
+    networks:
+      - compiler-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_files:
+    driver: local
+  media_files:
+    driver: local
+  gateway_logs:
+    driver: local
+
+networks:
+  compiler-network:
+    driver: bridge

@@ -1,286 +1,142 @@
+# 🖥️ Online Compiler Enterprise
 
-# Python Online Compiler
-A sophisticated web-based Python compiler built with Django that provides a secure, feature-rich environment for writing, testing, and executing Python code directly in the browser.
+An enterprise-grade web-based code compilation and execution platform built with Django, Django REST Framework, FastAPI, and Docker microservices architecture.
 
-# Features
-# 🔧 Core Functionality
-Real-time Code Execution: Execute Python code with instant results
-Advanced Code Editor: Monaco Editor with syntax highlighting, auto-completion, and error detection
-Dual Execution Modes:
-Safe Mode: Controlled execution environment
-Subprocess Mode: Traditional subprocess execution
-Code Validation: Pre-execution syntax and security validation
-Session Management: Save and load code snippets within sessions
-# 🛡️ Security Features
-Sandboxed Execution: Restricted imports and dangerous function blocking
-Timeout Protection: Automatic termination of long-running code
-Output Limiting: Prevents memory overflow from excessive output
-Input Sanitization: Comprehensive validation of user input
-CSRF Protection: Built-in Django CSRF protection
-# 🎨 User Interface
-Modern Design: Clean, responsive interface with gradient backgrounds
-Split Layout: Side-by-side code editor and output display
-Dark Theme: Easy-on-the-eyes Monaco editor with dark theme
-Real-time Status: Live updates of execution status and cursor position
-Keyboard Shortcuts: Quick access to common functions
-# 📚 Additional Features
-Code Examples: Built-in library of Python examples and tutorials
-Auto-save: Automatic saving of code during editing
-Clear Functions: Easy clearing of editor and output
-Responsive Design: Works seamlessly on desktop and mobile devices
-Error Handling: Comprehensive error reporting and user feedback
+## 🚀 Features
 
-```bash
-🚀 Installation
-Prerequisites
-Python 3.8 or higher
-pip (Python package manager)
-Git
-Step 1: Clone the Repository
-bash
-git clone https://github.com/yokesh-kumar-M/Online_compiler
-cd online-compiler
-Step 2: Create Virtual Environment
-bash
-python -m venv venv
+### Core Functionality
+- **Multi-language Support**: Python, JavaScript, C, C++, Java, Go
+- **Real-time Code Execution**: Execute code with instant results via microservice architecture
+- **Advanced Code Editor**: Monaco Editor with syntax highlighting, auto-completion, and error detection
+- **Code Snippets**: Save, share, fork, and star code snippets
+- **OAuth 2.0 Authentication**: GitHub and Google sign-in support
+- **JWT Authentication**: Secure token-based API authentication
+- **API Documentation**: Interactive Swagger/ReDoc API docs at `/api/docs/`
+
+### Security
+- Sandboxed code execution via isolated Docker containers
+- Rate limiting (anonymous and authenticated)
+- CSRF protection
+- CORS configuration
+- Resource limits on code execution (CPU, memory, timeout)
+- Audit logging for all security events
+
+### Architecture
+- **Gateway Service**: Django + DRF (API, auth, snippets)
+- **Executor Service**: FastAPI (isolated code execution)
+- **PostgreSQL**: Primary database
+- **Redis**: Caching, sessions, Celery broker
+- **Celery**: Async task processing
+- **Nginx**: Reverse proxy with rate limiting
+
+## 🏗️ Project Structure
+
 ```
-
-# On Windows
-venv\Scripts\activate
-
-# On macOS/Linux
-source venv/bin/activate
-Step 3: Install Dependencies
-bash
-pip install -r requirements.txt
-Step 4: Configure Django
-bash
-# Create database tables
-python manage.py makemigrations
-python manage.py migrate
-
-# Create superuser (optional)
-python manage.py createsuperuser
-
-# Collect static files (for production)
-python manage.py collectstatic
-Step 5: Run the Development Server
-bash
-python manage.py runserver
-Visit http://localhost:8000 in your browser to access the compiler.
-
-# 🔧 Configuration
-Environment Variables
-Create a .env file in the project root:
-
-# env
-DEBUG=True
-SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=localhost,127.0.0.1
-DATABASE_URL=sqlite:///db.sqlite3
-Security Settings
-For production deployment, update settings.py:
-
-# python
-DEBUG = False
-ALLOWED_HOSTS = ['your-domain.com']
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-# 📖 Usage
-# Basic Usage
-Write Code: Enter your Python code in the Monaco editor
-Run Code: Click "Run Code" button or press Ctrl+Enter
-View Output: Results appear in the output panel
-Save Code: Use "Save" button to store code in session
-Load Examples: Browse built-in examples for learning
-# Keyboard Shortcuts
-Ctrl+Enter / Cmd+Enter: Run code
-Ctrl+S / Cmd+S: Save code
-Ctrl+O / Cmd+O: Load code
-Ctrl+L / Cmd+L: Clear editor
-F5: Run code
-# Code Examples Available
-Hello World: Basic Python syntax
-Fibonacci Sequence: Recursive functions
-Data Structures: Lists, dictionaries, sets
-Sorting Algorithms: Algorithm implementations
-
-# 🏗️ Project Structure
-
-``` bash
 online_compiler/
-├── compiler/                 # Main Django app
-│   ├── templates/           # HTML templates
-│   │   └── compiler/
-│   │       └── index.html   # Main interface
-│   ├── views.py            # View functions
-│   ├── urls.py             # URL routing
-│   └── models.py           # Database models
+├── accounts/                # User auth, OAuth, profiles
+├── compiler/                # Code execution, API endpoints
+├── snippets/                # Code snippets CRUD
 ├── online_compiler/         # Django project settings
-│   ├── settings.py         # Configuration
-│   ├── urls.py             # Main URL routing
-│   └── wsgi.py             # WSGI application
-├── static/                 # Static files
-├── media/                  # Media files
-├── logs/                   # Log files
-├── requirements.txt        # Python dependencies
-├── manage.py              # Django management
-└── README.md              # This file
+├── services/
+│   └── executor/            # FastAPI executor microservice
+├── nginx/                   # Nginx reverse proxy config
+├── scripts/                 # Deployment scripts
+├── templates/               # HTML templates
+├── docker-compose.yml       # Multi-container orchestration
+├── Dockerfile               # Gateway service image
+└── requirements.txt         # Python dependencies
 ```
 
-# 🔒 Security Considerations
-Implemented Security Measures
-Restricted Imports: Blocks dangerous modules like os, subprocess, sys
-Function Filtering: Prevents execution of eval, exec, compile
-Timeout Protection: Limits execution time to prevent infinite loops
-Output Limiting: Prevents memory exhaustion from excessive output
-Input Validation: Comprehensive validation of all user inputs
-CSRF Protection: Django's built-in CSRF protection
-Session Security: Secure session handling and storage
-Additional Recommendations for Production
-Use HTTPS for all connections
-Implement rate limiting
-Set up proper logging and monitoring
-Use a reverse proxy (nginx)
-Configure firewall rules
-Regular security updates
-# 🚀 Deployment
-Using Gunicorn (Production)
-bash
-# Install gunicorn
-pip install gunicorn
+## 🔧 Quick Start
 
-# Run with gunicorn
-gunicorn online_compiler.wsgi:application --bind 0.0.0.0:8000
-Using Docker
-dockerfile
-FROM python:3.9-slim
+### Prerequisites
+- Docker & Docker Compose
+- Git
 
-# WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-# COPY . .
-RUN python manage.py collectstatic --noinput
-
-CMD ["gunicorn", "online_compiler.wsgi:application", "--bind", "0.0.0.0:8000"]
-Environment Variables for Production
-env
-DEBUG=False
-SECRET_KEY=your-production-secret-key
-ALLOWED_HOSTS=your-domain.com
-DATABASE_URL=postgresql://user:password@localhost/dbname
-🧪 Testing
-# Run Tests
-bash
-# Run all tests
-python manage.py test
-
-# Run specific test
-python manage.py test compiler.tests.TestCodeExecution
-
-# Run with coverage
-pytest --cov=compiler tests/
-Test Coverage
-View functions testing
-Code execution testing
-Security validation testing
-User interface testing
-🤝 Contributing
-Development Setup
-Fork the repository
-Create a feature branch (git checkout -b feature/amazing-feature)
-Make your changes
-Add tests for new functionality
-Ensure all tests pass (python manage.py test)
-Commit your changes (git commit -m 'Add amazing feature')
-Push to branch (git push origin feature/amazing-feature)
-Open a Pull Request
-Code Style
-Follow PEP 8 for Python code
-Use Black for code formatting
-Add docstrings for all functions
-Include type hints where appropriate
-# 📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-# 🙏 Acknowledgments
-Django: Web framework
-Monaco Editor: Code editor component
-Font Awesome: Icons
-Bootstrap: CSS framework inspiration
-Python Community: For the amazing language
-# 📞 Support
-For support, email support@yourcompiler.com or create an issue on GitHub.
-
-# 🔮 Future Enhancements
-Planned Features
- Multi-language support (JavaScript, Java, C++)
- User authentication and profiles
- Code sharing and collaboration
- Advanced debugging tools
- Package installation support
- Code version history
- Real-time collaboration
- Mobile app development
- API for external integrations
- Advanced analytics and metrics
-Performance Improvements
- Code caching mechanisms
- Async execution handling
- Load balancing support
- Database optimization
- CDN integration for static files
-Made with efforts by Yokesh Kumar
-
-Happy Coding! 🐍
-
-=======
-# 🖥️ Django Online Compiler
-
-A simple web-based code compiler using Django and Python. Users can input Python code and get the output directly on the webpage using Python's `subprocess` module.
-
----
-
-## 🔧 Tech Stack
-
-- **Backend**: Django, Python
-- **Frontend**: Django templates (HTML)
-- **Code Execution**: Python `subprocess`
-
----
+### 1. Clone & Configure
 
 ```bash
-## Project Structure
+git clone https://github.com/yokesh-kumar-M/Online_compiler
+cd online_compiler
 
- ├── compiler/ # Django app
- │ ├── templates/
- │ │ └── index.html
- │ ├── views.py
- │ ├── urls.py
- ├── online_compiler/ # Django project settings
- │ ├── settings.py
- │ └── urls.py
- ├── manage.py
- └── .gitignore
+# Copy and edit environment variables
+cp .env.example .env
+# Edit .env with your production values
 ```
----
 
-## How to Run Locally
+### 2. Deploy with Docker Compose
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/online-compiler.git
-cd online-compiler
+# Build and start all services
+docker-compose up -d --build
 
-# 2. Create a virtual environment
-python -m venv venv
-source venv/bin/activate     # On Windows: venv\Scripts\activate
+# Check status
+docker-compose ps
 
-# 3. Install Django
-pip install django
+# View logs
+docker-compose logs -f
+```
 
-# 4. Run the server
-python manage.py runserver
->>>>>>> b33120670119842e193b6b76568b5b5a8c26c1da
+### 3. Access the Application
+
+| Service          | URL                              |
+|------------------|----------------------------------|
+| Web Interface    | http://localhost                  |
+| API Docs         | http://localhost/api/docs/        |
+| Admin Panel      | http://localhost/admin/           |
+| Health Check     | http://localhost/health/          |
+
+### Default Admin Credentials
+- **Email**: admin@compiler.dev
+- **Password**: AdminPass123!@# (change immediately in production)
+
+## 📖 API Endpoints
+
+### Authentication
+| Method | Endpoint                          | Description          |
+|--------|-----------------------------------|----------------------|
+| POST   | `/api/v1/auth/register/`          | Register new account |
+| POST   | `/api/v1/auth/login/`             | Login & get JWT      |
+| POST   | `/api/v1/auth/logout/`            | Logout & blacklist   |
+| POST   | `/api/v1/auth/token/refresh/`     | Refresh JWT token    |
+| GET    | `/api/v1/auth/profile/`           | Get user profile     |
+| POST   | `/api/v1/auth/change-password/`   | Change password      |
+| POST   | `/api/v1/auth/github/callback/`   | GitHub OAuth         |
+| POST   | `/api/v1/auth/google/callback/`   | Google OAuth         |
+
+### Code Execution
+| Method | Endpoint                          | Description              |
+|--------|-----------------------------------|--------------------------|
+| POST   | `/api/v1/compiler/execute/`       | Execute code             |
+| GET    | `/api/v1/compiler/languages/`     | Supported languages      |
+| GET    | `/api/v1/compiler/examples/`      | Code examples            |
+| GET    | `/api/v1/compiler/health/`        | Service health status    |
+
+### Snippets
+| Method | Endpoint                          | Description              |
+|--------|-----------------------------------|--------------------------|
+| GET    | `/api/v1/snippets/`               | List snippets            |
+| POST   | `/api/v1/snippets/`               | Create snippet           |
+| GET    | `/api/v1/snippets/{id}/`          | Get snippet              |
+| PUT    | `/api/v1/snippets/{id}/`          | Update snippet           |
+| DELETE | `/api/v1/snippets/{id}/`          | Delete snippet           |
+| POST   | `/api/v1/snippets/{id}/star/`     | Star/unstar snippet      |
+| POST   | `/api/v1/snippets/{id}/fork/`     | Fork snippet             |
+
+## 🔒 Production Deployment
+
+1. Copy `.env.production` to `.env` and update with your values
+2. Set `DJANGO_DEBUG=False`
+3. Set a strong `DJANGO_SECRET_KEY`
+4. Update `DJANGO_ALLOWED_HOSTS` with your domain
+5. Configure `CORS_ALLOWED_ORIGINS` with your frontend URL
+6. Set up SSL/TLS certificates for HTTPS
+7. Run: `docker-compose up -d --build`
+
+## 📝 License
+
+MIT License
+
+## 👤 Author
+
+Made with ❤️ by **Yokesh Kumar**

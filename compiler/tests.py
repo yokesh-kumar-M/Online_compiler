@@ -1,121 +1,78 @@
+import pytest
 from django.test import TestCase, Client
 from django.urls import reverse
-import json
+from rest_framework.test import APIClient
+from accounts.models import User
 
-class CompilerTestCase(TestCase):
+
+class TestFrontendViews(TestCase):
     def setUp(self):
         self.client = Client()
-    
+
     def test_index_page_loads(self):
-        """Test that the main page loads successfully"""
-        response = self.client.get(reverse('index'))
+        response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Advanced Python Online Compiler')
-    
-    def test_simple_code_execution(self):
-        """Test basic code execution"""
-        code = 'print("Hello, World!")'
-        response = self.client.post(reverse('run_code'), {
-            'code': code,
-            'mode': 'safe'
-        })
+        self.assertContains(response, 'Online Compiler')
+
+    def test_run_code_no_code(self):
+        response = self.client.post('/run/', {'code': ''})
         self.assertEqual(response.status_code, 200)
-        
-        data = json.loads(response.content)
-        self.assertTrue(data['success'])
-        self.assertIn('Hello, World!', data['output'])
-    
-    def test_code_validation(self):
-        """Test code validation functionality"""
-        # Valid code
-        valid_code = 'print("Valid code")'
-        response = self.client.post(reverse('validate_code'), {
-            'code': valid_code
-        })
+        data = response.json()
+        self.assertFalse(data['success'])
+
+    def test_validate_valid_code(self):
+        response = self.client.post('/validate/', {'code': 'print("hello")'})
         self.assertEqual(response.status_code, 200)
-        
-        data = json.loads(response.content)
+        data = response.json()
         self.assertTrue(data['valid'])
-        
-        # Invalid code (restricted import)
-        invalid_code = 'import os\nos.system("ls")'
-        response = self.client.post(reverse('validate_code'), {
-            'code': invalid_code
-        })
+
+    def test_validate_invalid_code(self):
+        response = self.client.post('/validate/', {'code': 'def foo(:'})
         self.assertEqual(response.status_code, 200)
-        
-        data = json.loads(response.content)
+        data = response.json()
         self.assertFalse(data['valid'])
-    
-    def test_save_and_load_code(self):
-        """Test save and load functionality"""
-        code = 'print("Test code")'
-        filename = 'test.py'
-        
-        # Save code
-        response = self.client.post(reverse('save_code'), {
-            'code': code,
-            'filename': filename
-        })
+
+    def test_examples_endpoint(self):
+        response = self.client.get('/examples/')
         self.assertEqual(response.status_code, 200)
-        
-        data = json.loads(response.content)
-        self.assertTrue(data['success'])
-        
-        # Load code
-        response = self.client.post(reverse('load_code'), {
-            'filename': filename
-        })
-        self.assertEqual(response.status_code, 200)
-        
-        data = json.loads(response.content)
-        self.assertTrue(data['success'])
-        self.assertEqual(data['code'], code)
-    
-    def test_list_saved_codes(self):
-        """Test listing saved codes"""
-        # Save a code first
-        self.client.post(reverse('save_code'), {
-            'code': 'print("test")',
-            'filename': 'test.py'
-        })
-        
-        # List saved codes
-        response = self.client.get(reverse('list_saved_codes'))
-        self.assertEqual(response.status_code, 200)
-        
-        data = json.loads(response.content)
-        self.assertTrue(data['success'])
-        self.assertIn('test.py', data['files'])
-    
-    def test_get_examples(self):
-        """Test getting code examples"""
-        response = self.client.get(reverse('get_examples'))
-        self.assertEqual(response.status_code, 200)
-        
-        data = json.loads(response.content)
+        data = response.json()
         self.assertTrue(data['success'])
         self.assertIn('examples', data)
-        self.assertIn('hello_world', data['examples'])
-    
-    def test_security_restrictions(self):
-        """Test security restrictions"""
-        # Test restricted imports
-        dangerous_codes = [
-            'import os\nos.system("ls")',
-            'import subprocess\nsubprocess.call("ls")',
-            'exec("print(1)")',
-            'eval("1+1")',
-        ]
-        
-        for code in dangerous_codes:
-            response = self.client.post(reverse('run_code'), {
-                'code': code,
-                'mode': 'safe'
-            })
-            self.assertEqual(response.status_code, 200)
-            
-            data = json.loads(response.content)
-            self.assertFalse(data['success'])
-    
-    def test_error_handling(self):
+
+
+class TestCompilerAPI(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email='test@example.com',
+            username='testuser',
+            password='TestPass123!@#',
+        )
+
+    def test_execute_no_code(self):
+        response = self.client.post('/api/v1/compiler/execute/', {'code': ''}, format='json')
+        self.assertEqual(response.status_code, 400)
+
+    def test_execute_python_code(self):
+        response = self.client.post(
+            '/api/v1/compiler/execute/',
+            {'code': 'print("hello")', 'language': 'python'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('success', data)
+
+    def test_get_examples(self):
+        response = self.client.get('/api/v1/compiler/examples/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_health_endpoint(self):
+        response = self.client.get('/api/v1/compiler/health/')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'healthy')
+
+    def test_languages_endpoint(self):
+        response = self.client.get('/api/v1/compiler/languages/')
+        self.assertEqual(response.status_code, 200)
