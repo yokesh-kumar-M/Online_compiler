@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev curl \
+    gcc libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -26,11 +26,6 @@ RUN chmod +x /app/scripts/entrypoint.sh
 # Create non-root user
 RUN useradd -m -s /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
-
-EXPOSE 8000
-
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/health/ || exit 1
 
 ENTRYPOINT ["/app/scripts/entrypoint.sh"]
 CMD ["sh", "-c", "gunicorn online_compiler.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --threads 2 --timeout 120 --access-logfile - --error-logfile -"]
