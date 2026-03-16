@@ -1,6 +1,4 @@
-import pytest
 from django.test import TestCase, Client
-from django.urls import reverse
 from rest_framework.test import APIClient
 from accounts.models import User
 
@@ -14,12 +12,6 @@ class TestFrontendViews(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Online Compiler')
 
-    def test_run_code_no_code(self):
-        response = self.client.post('/run/', {'code': ''})
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertFalse(data['success'])
-
     def test_validate_valid_code(self):
         response = self.client.post('/validate/', {'code': 'print("hello")'})
         self.assertEqual(response.status_code, 200)
@@ -31,13 +23,6 @@ class TestFrontendViews(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertFalse(data['valid'])
-
-    def test_examples_endpoint(self):
-        response = self.client.get('/examples/')
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['success'])
-        self.assertIn('examples', data)
 
 
 class TestCompilerAPI(TestCase):

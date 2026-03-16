@@ -70,36 +70,11 @@ Render is the **recommended platform** for this project. It supports all service
 
 ---
 
-## Vercel (NOT RECOMMENDED for Django)
-
-> **WARNING**: Vercel is a **serverless/frontend** platform. Django has severe
-> limitations on Vercel:
-> - 10-second function timeout (code execution WILL fail)
-> - No persistent file system
-> - No background workers (Celery won't work)
-> - No managed PostgreSQL/Redis
-> - Cold starts on every request
-
-### When to Use Vercel
-Only if you have a **separate frontend** (React/Next.js) that calls the
-Render-hosted Django API. In that case:
-- Deploy frontend on Vercel
-- Point API calls to `https://your-gateway.onrender.com/api/`
-
-### If You MUST Deploy Django on Vercel (Demo Only)
-1. Install Vercel CLI: `npm i -g vercel`
-2. You need an **external PostgreSQL** (e.g., Neon, Supabase)
-3. Set environment variables on Vercel dashboard
-4. Run: `cd online_compiler && vercel --prod`
-5. Note: Code execution will NOT work due to timeout limits
-
----
-
 ## Docker Compose (Self-Hosted / VPS)
 
 ```bash
 cd online_compiler
-cp .env.production .env
+cp .env.example .env
 # Edit .env with your production values
 docker-compose up -d --build
 ```

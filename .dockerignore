@@ -15,8 +15,6 @@ __pycache__
 .env.*
 docker-compose.yml
 render.yaml
-vercel.json
-vercel_app
 nginx
 *.zip
 htmlcov

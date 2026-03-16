@@ -18,6 +18,7 @@ build/
 .env
 .env.local
 .env.production
+.env.staging
 venv/
 .venv/
 env/

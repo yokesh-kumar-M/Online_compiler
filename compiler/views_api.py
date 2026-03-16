@@ -5,11 +5,10 @@ from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema
 
 from .executor_client import ExecutorClient
 from snippets.models import ExecutionHistory
-from accounts.models import AuditLog
 
 logger = logging.getLogger('compiler')
 
