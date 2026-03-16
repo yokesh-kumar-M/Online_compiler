@@ -1,8 +1,10 @@
 FROM python:3.12-slim
 
-# Install compilers for multi-language support
+# Install lightweight compilers only (free tier friendly)
+# gcc/g++ for C/C++, nodejs for JavaScript
+# Note: Java and Go omitted to keep image under 512MB for Render free tier
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ default-jdk nodejs npm golang-go \
+    gcc g++ nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
