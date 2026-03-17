@@ -22,6 +22,7 @@ CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS if o.strip()]
 if RENDER_EXTERNAL_HOSTNAME:
     CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
 
 # =============================================================================
 # APPLICATION DEFINITION
@@ -235,8 +236,14 @@ OAUTH2_PROVIDER = {
 # CORS
 # =============================================================================
 CORS_ALLOWED_ORIGINS = os.environ.get(
-    'CORS_ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1'
+    'CORS_ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1,http://localhost:3000'
 ).split(',')
+CORS_ALLOWED_ORIGINS = [o.strip() for o in CORS_ALLOWED_ORIGINS if o.strip()]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept', 'accept-encoding', 'authorization', 'content-type',
@@ -288,7 +295,11 @@ MAX_OUTPUT_SIZE = int(os.environ.get('MAX_OUTPUT_SIZE', 10000))
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 _static_dir = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [_static_dir] if os.path.isdir(_static_dir) else []
+_frontend_static = os.path.join(BASE_DIR, 'staticfiles', 'frontend')
+STATICFILES_DIRS = [d for d in [_static_dir] if os.path.isdir(d)]
+# Add the React build output so development server can serve it
+if os.path.isdir(_frontend_static):
+    STATICFILES_DIRS.append(('frontend', _frontend_static))
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
