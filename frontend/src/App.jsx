@@ -51,12 +51,12 @@ export default function App() {
   }, [handleKeyDown]);
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden noise-bg relative">
-      {/* Ambient background effects */}
+    <div className="h-screen flex flex-col bg-[#020617] text-slate-100 overflow-hidden noise-bg relative">
+      {/* Ambient background effects (Nano Banana Style) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -left-1/4 w-[800px] h-[800px] bg-indigo-500/[0.03] rounded-full blur-3xl" />
-        <div className="absolute -bottom-1/2 -right-1/4 w-[600px] h-[600px] bg-purple-500/[0.03] rounded-full blur-3xl" />
-        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/[0.02] rounded-full blur-3xl" />
+        <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.4, 0.3] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className="absolute -top-1/4 -left-1/4 w-[800px] h-[800px] bg-indigo-500/20 rounded-full blur-[120px]" />
+        <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.3, 0.2] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} className="absolute -bottom-1/4 -right-1/4 w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[100px]" />
+        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-500/15 rounded-full blur-[120px]" />
       </div>
 
       {/* Main Layout */}
