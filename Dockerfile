@@ -4,7 +4,7 @@ WORKDIR /app/frontend
 # Copy package files (from the frontend directory)
 COPY frontend/package.json frontend/package-lock.json* ./
 # Install dependencies
-RUN npm ci || npm install
+RUN npm install --legacy-peer-deps
 # Copy the rest of the frontend source
 COPY frontend/ ./
 # Build the Vite app
