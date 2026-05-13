@@ -133,9 +133,6 @@ docker-compose logs -f
 6. Set up SSL/TLS certificates for HTTPS
 7. Run: `docker-compose up -d --build`
 
-## 📝 License
-
-MIT License
 
 ## 👤 Author
 
