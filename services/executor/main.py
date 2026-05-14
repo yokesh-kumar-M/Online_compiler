@@ -10,6 +10,10 @@ import logging
 import tempfile
 import subprocess
 import asyncio
+
+import aiofiles
+import aiofiles.os
+import aiofiles.tempfile
 from typing import Optional
 from contextlib import asynccontextmanager
 
@@ -134,10 +138,10 @@ async def _execute_interpreted(code: str, language: str, stdin: str, timeout: in
     """Execute interpreted languages (Python, JS, Go)."""
     lang_config = LANGUAGES[language]
 
-    with tempfile.NamedTemporaryFile(
+    async with aiofiles.tempfile.NamedTemporaryFile(
         mode='w', suffix=lang_config['file_extension'], delete=False, dir=tempfile.gettempdir()
     ) as f:
-        f.write(code)
+        await f.write(code)
         source_file = f.name
 
     try:
@@ -179,7 +183,7 @@ async def _execute_interpreted(code: str, language: str, stdin: str, timeout: in
         }
     finally:
         try:
-            os.unlink(source_file)
+            await aiofiles.os.unlink(source_file)
         except OSError:
             pass
 
@@ -196,8 +200,8 @@ async def _execute_compiled(code: str, language: str, stdin: str, timeout: int, 
 
         output_file = os.path.join(tmpdir, 'code')
 
-        with open(source_file, 'w') as f:
-            f.write(code)
+        async with aiofiles.open(source_file, 'w') as f:
+            await f.write(code)
 
         # Compile
         compile_cmd = [
