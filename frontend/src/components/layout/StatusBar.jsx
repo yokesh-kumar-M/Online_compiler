@@ -1,6 +1,6 @@
 import { useEditorStore } from '../../store';
 import { LANGUAGE_CONFIG } from '../../utils/constants';
-import { Circle, Wifi, WifiOff } from 'lucide-react';
+import { Circle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function StatusBar() {

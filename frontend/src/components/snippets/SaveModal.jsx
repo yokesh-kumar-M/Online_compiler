@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUIStore, useEditorStore, useSnippetsStore, useAuthStore } from '../../store';
+import { useUIStore, useEditorStore, useSnippetsStore } from '../../store';
 import { X, Save, Globe, Lock, Eye } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -82,8 +82,9 @@ export default function SaveModal() {
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Title *</label>
+                <label htmlFor="snippet-title" className="block text-sm text-slate-400 mb-1.5">Title *</label>
                 <input
+                  id="snippet-title"
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -94,8 +95,9 @@ export default function SaveModal() {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Description</label>
+                <label htmlFor="snippet-description" className="block text-sm text-slate-400 mb-1.5">Description</label>
                 <textarea
+                  id="snippet-description"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="What does this code do?"
@@ -105,8 +107,9 @@ export default function SaveModal() {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Tags</label>
+                <label htmlFor="snippet-tags" className="block text-sm text-slate-400 mb-1.5">Tags</label>
                 <input
+                  id="snippet-tags"
                   type="text"
                   value={form.tags}
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
@@ -116,8 +119,8 @@ export default function SaveModal() {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Visibility</label>
-                <div className="grid grid-cols-3 gap-2">
+                <span id="snippet-visibility-label" className="block text-sm text-slate-400 mb-2">Visibility</span>
+                <div className="grid grid-cols-3 gap-2" role="group" aria-labelledby="snippet-visibility-label">
                   {visibilityOptions.map(({ value, label, icon: Icon, desc }) => (
                     <button
                       key={value}
@@ -153,9 +156,10 @@ export default function SaveModal() {
                 disabled={saving}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
-                {saving ? (
+                {saving && (
                   <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                ) : (
+                )}
+                {!saving && (
                   <>
                     <Save size={16} />
                     Save Snippet

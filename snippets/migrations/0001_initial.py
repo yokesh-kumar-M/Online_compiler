@@ -5,6 +5,8 @@ import uuid
 from django.conf import settings
 from django.db import migrations, models
 
+SNIPPET_MODEL = 'snippets.snippet'
+
 
 class Migration(migrations.Migration):
 
@@ -31,7 +33,7 @@ class Migration(migrations.Migration):
                 ('executions_count', models.IntegerField(default=0)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('fork_of', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='forks', to='snippets.snippet')),
+                ('fork_of', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='forks', to=SNIPPET_MODEL)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='snippets', to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -53,7 +55,7 @@ class Migration(migrations.Migration):
                 ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='executions', to=settings.AUTH_USER_MODEL)),
-                ('snippet', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='executions', to='snippets.snippet')),
+                ('snippet', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='executions', to=SNIPPET_MODEL)),
             ],
             options={
                 'db_table': 'execution_history',
@@ -65,7 +67,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('snippet', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='stars', to='snippets.snippet')),
+                ('snippet', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='stars', to=SNIPPET_MODEL)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='stars', to=settings.AUTH_USER_MODEL)),
             ],
             options={

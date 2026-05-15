@@ -1,8 +1,9 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Terminal, Code2, Play, Menu, LogIn, UserPlus, LogOut,
-  User, ChevronDown, Zap, Settings, BookOpen, FolderOpen
+  Terminal, LogIn, UserPlus, LogOut,
+  Zap, Settings, BookOpen, FolderOpen
 } from 'lucide-react';
+import PropTypes from 'prop-types';
 import { useAuthStore, useUIStore, useEditorStore } from '../../store';
 
 export default function Navbar() {
@@ -133,3 +134,14 @@ function NavButton({ icon: Icon, label, onClick, active }) {
     </motion.button>
   );
 }
+
+NavButton.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+  active: PropTypes.bool,
+};
+
+NavButton.defaultProps = {
+  active: false,
+};

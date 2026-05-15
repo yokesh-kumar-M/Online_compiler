@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore, useAuthStore } from '../../store';
 import { X, Github, Mail, Lock, User, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import toast from 'react-hot-toast';
 
 export default function AuthModal() {
@@ -177,11 +178,7 @@ export default function AuthModal() {
                 disabled={loading}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
-                {loading ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  authModalMode === 'login' ? 'Sign In' : 'Create Account'
-                )}
+                {renderSubmitContent(loading, authModalMode)}
               </motion.button>
             </form>
 
@@ -202,6 +199,13 @@ export default function AuthModal() {
   );
 }
 
+function renderSubmitContent(loading, mode) {
+  if (loading) {
+    return <Loader2 size={18} className="animate-spin" />;
+  }
+  return mode === 'login' ? 'Sign In' : 'Create Account';
+}
+
 function InputField({ icon: Icon, ...props }) {
   return (
     <div className="relative">
@@ -213,6 +217,10 @@ function InputField({ icon: Icon, ...props }) {
     </div>
   );
 }
+
+InputField.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+};
 
 function OAuthButton({ icon: Icon, label, onClick }) {
   return (
@@ -228,3 +236,9 @@ function OAuthButton({ icon: Icon, label, onClick }) {
     </motion.button>
   );
 }
+
+OAuthButton.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+};

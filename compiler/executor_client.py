@@ -143,7 +143,7 @@ class ExecutorClient:
                 langs = resp.json()
                 cache.set(cache_key, langs, timeout=300)
                 return langs
-        except Exception:
-            pass
+        except requests.RequestException as exc:
+            logger.warning("Failed to fetch supported languages: %s", exc)
 
         return [{'name': 'python', 'display_name': 'Python', 'version': '3.12'}]

@@ -32,6 +32,10 @@ LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger('executor')
 
+# Format placeholders for compile commands
+SOURCE_PLACEHOLDER = '{source}'
+OUTPUT_PLACEHOLDER = '{output}'
+
 # Supported languages configuration
 LANGUAGES = {
     'python': {
@@ -53,7 +57,7 @@ LANGUAGES = {
         'version': 'GCC 13',
         'command': None,  # Compile then run
         'file_extension': '.c',
-        'compile_command': ['gcc', '-o', '{output}', '{source}', '-lm'],
+        'compile_command': ['gcc', '-o', OUTPUT_PLACEHOLDER, SOURCE_PLACEHOLDER, '-lm'],
         'template': '#include <stdio.h>\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n',
     },
     'cpp': {
@@ -61,7 +65,7 @@ LANGUAGES = {
         'version': 'G++ 13',
         'command': None,
         'file_extension': '.cpp',
-        'compile_command': ['g++', '-o', '{output}', '{source}', '-std=c++17'],
+        'compile_command': ['g++', '-o', OUTPUT_PLACEHOLDER, SOURCE_PLACEHOLDER, '-std=c++17'],
         'template': '#include <iostream>\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}\n',
     },
     'java': {
@@ -69,7 +73,7 @@ LANGUAGES = {
         'version': '21',
         'command': None,
         'file_extension': '.java',
-        'compile_command': ['javac', '{source}'],
+        'compile_command': ['javac', SOURCE_PLACEHOLDER],
         'run_command': ['java', '-cp', '{dir}', 'Main'],
         'template': 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}\n',
     },
@@ -157,10 +161,10 @@ async def _execute_interpreted(code: str, language: str, stdin: str, timeout: in
         )
 
         try:
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(input=stdin.encode() if stdin else None),
-                timeout=timeout,
-            )
+            async with asyncio.timeout(timeout):
+                stdout, stderr = await proc.communicate(
+                    input=stdin.encode() if stdin else None
+                )
         except asyncio.TimeoutError:
             proc.kill()
             await proc.wait()
@@ -184,8 +188,8 @@ async def _execute_interpreted(code: str, language: str, stdin: str, timeout: in
     finally:
         try:
             await aiofiles.os.unlink(source_file)
-        except OSError:
-            pass
+        except OSError as exc:
+            logger.debug("Failed to cleanup temp source file %s: %s", source_file, exc)
 
 
 async def _execute_compiled(code: str, language: str, stdin: str, timeout: int, max_output: int) -> dict:
@@ -246,10 +250,10 @@ async def _execute_compiled(code: str, language: str, stdin: str, timeout: int, 
                 stderr=asyncio.subprocess.PIPE,
                 cwd=tmpdir,
             )
-            stdout, stderr = await asyncio.wait_for(
-                run_proc.communicate(input=stdin.encode() if stdin else None),
-                timeout=timeout,
-            )
+            async with asyncio.timeout(timeout):
+                stdout, stderr = await run_proc.communicate(
+                    input=stdin.encode() if stdin else None
+                )
         except asyncio.TimeoutError:
             return {
                 'success': False, 'output': '',
@@ -297,7 +301,7 @@ async def health():
 
 
 @app.get("/languages")
-async def languages(api_key: str = Depends(verify_api_key)):
+def languages(api_key: str = Depends(verify_api_key)):
     return [
         {
             'name': name,

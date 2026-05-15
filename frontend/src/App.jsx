@@ -129,9 +129,17 @@ export default function App() {
   );
 }
 
+function getOutputStatusIcon(output) {
+  if (output?.success === undefined) return '';
+  return output.success ? '✅' : '❌';
+}
+
 function MobileOutputToggle() {
   const { output, isRunning } = useEditorStore();
   const [expanded, setExpanded] = useState(false);
+
+  const arrow = expanded ? '▼' : '▲';
+  const statusIcon = getOutputStatusIcon(output);
 
   return (
     <div className="md:hidden">
@@ -146,7 +154,7 @@ function MobileOutputToggle() {
           </>
         ) : (
           <>
-            {expanded ? '▼' : '▲'} Output {output?.success !== undefined && (output.success ? '✅' : '❌')}
+            {arrow} Output {statusIcon}
           </>
         )}
       </button>

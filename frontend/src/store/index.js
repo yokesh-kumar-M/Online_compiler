@@ -52,7 +52,10 @@ export const useAuthStore = create((set, get) => ({
       let msg = 'Registration failed';
       if (errors) {
         msg = Object.entries(errors)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+          .map(([k, v]) => {
+            const value = Array.isArray(v) ? v.join(', ') : v;
+            return `${k}: ${value}`;
+          })
           .join('\n');
       }
       set({ error: msg, loading: false });
@@ -64,7 +67,9 @@ export const useAuthStore = create((set, get) => ({
     const refresh = localStorage.getItem('refresh_token');
     try {
       if (refresh) await authAPI.logout(refresh);
-    } catch {}
+    } catch (err) {
+      console.warn('Logout call failed; clearing tokens locally', err);
+    }
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     set({ user: null, isAuthenticated: false });

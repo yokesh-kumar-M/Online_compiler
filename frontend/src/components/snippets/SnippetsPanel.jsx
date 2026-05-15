@@ -2,10 +2,170 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore, useSnippetsStore, useEditorStore, useAuthStore } from '../../store';
 import {
   X, FolderOpen, Star, GitFork, Trash2, Code2, Clock,
-  Eye, Lock, Globe, Loader2, Search, ChevronRight
+  Eye, Lock, Globe, Loader2, Search
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import toast from 'react-hot-toast';
+
+const VISIBILITY_ICON = {
+  private: Lock,
+  unlisted: Eye,
+  public: Globe,
+};
+
+function SnippetCard({ snippet, idx, isAuthenticated, onLoad, onStar, onFork, onDelete }) {
+  const VisIcon = VISIBILITY_ICON[snippet.visibility] || Lock;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: idx * 0.03 }}
+      whileHover={{ scale: 1.01, x: 2 }}
+      onClick={() => onLoad(snippet)}
+      className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-indigo-500/30 cursor-pointer transition-all group"
+    >
+      <div className="flex items-start justify-between mb-2">
+        <h3 className="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors truncate flex-1">
+          {snippet.title}
+        </h3>
+        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+          <VisIcon size={12} className="text-slate-500" />
+        </div>
+      </div>
+
+      {snippet.description && (
+        <p className="text-xs text-slate-500 mb-2 line-clamp-2">
+          {snippet.description}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-700/50 text-slate-400">
+            {snippet.language}
+          </span>
+          <span className="text-[10px] text-slate-600 flex items-center gap-1">
+            <Clock size={10} />
+            {new Date(snippet.updated_at).toLocaleDateString()}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {isAuthenticated && (
+            <>
+              <button
+                onClick={(e) => onStar(e, snippet.id)}
+                className={`p-1 rounded hover:bg-slate-700 transition-colors ${
+                  snippet.is_starred ? 'text-amber-400' : 'text-slate-500 hover:text-amber-400'
+                }`}
+                title="Star"
+              >
+                <Star size={12} className={snippet.is_starred ? 'fill-current' : ''} />
+              </button>
+              <button
+                onClick={(e) => onFork(e, snippet.id)}
+                className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-indigo-400 transition-colors"
+                title="Fork"
+              >
+                <GitFork size={12} />
+              </button>
+              <button
+                onClick={(e) => onDelete(e, snippet.id)}
+                className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-red-400 transition-colors"
+                title="Delete"
+              >
+                <Trash2 size={12} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {snippet.stars_count > 0 && (
+        <div className="flex items-center gap-1 mt-1.5 text-[10px] text-amber-500/60">
+          <Star size={10} className="fill-current" />
+          {snippet.stars_count}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+SnippetCard.propTypes = {
+  snippet: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    title: PropTypes.string,
+    description: PropTypes.string,
+    language: PropTypes.string,
+    visibility: PropTypes.string,
+    updated_at: PropTypes.string,
+    is_starred: PropTypes.bool,
+    stars_count: PropTypes.number,
+  }).isRequired,
+  idx: PropTypes.number.isRequired,
+  isAuthenticated: PropTypes.bool.isRequired,
+  onLoad: PropTypes.func.isRequired,
+  onStar: PropTypes.func.isRequired,
+  onFork: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+};
+
+function SnippetsListContent({ loading, isAuthenticated, filteredSnippets, search, handlers }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 size={24} className="text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Lock size={32} className="text-slate-600 mb-3" />
+        <p className="text-slate-400 text-sm">Sign in to view your snippets</p>
+      </div>
+    );
+  }
+  if (filteredSnippets.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Code2 size={32} className="text-slate-600 mb-3" />
+        <p className="text-slate-400 text-sm">
+          {search ? 'No matching snippets' : 'No snippets yet'}
+        </p>
+        <p className="text-slate-600 text-xs mt-1">
+          Save your code using the Save button
+        </p>
+      </div>
+    );
+  }
+  return filteredSnippets.map((snippet, idx) => (
+    <SnippetCard
+      key={snippet.id}
+      snippet={snippet}
+      idx={idx}
+      isAuthenticated={isAuthenticated}
+      onLoad={handlers.onLoad}
+      onStar={handlers.onStar}
+      onFork={handlers.onFork}
+      onDelete={handlers.onDelete}
+    />
+  ));
+}
+
+SnippetsListContent.propTypes = {
+  loading: PropTypes.bool.isRequired,
+  isAuthenticated: PropTypes.bool.isRequired,
+  filteredSnippets: PropTypes.arrayOf(PropTypes.object).isRequired,
+  search: PropTypes.string.isRequired,
+  handlers: PropTypes.shape({
+    onLoad: PropTypes.func.isRequired,
+    onStar: PropTypes.func.isRequired,
+    onFork: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 export default function SnippetsPanel() {
   const { showSnippetsPanel, closeSnippetsPanel } = useUIStore();
@@ -66,12 +226,6 @@ export default function SnippetsPanel() {
     s.language?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const visibilityIcon = {
-    private: Lock,
-    unlisted: Eye,
-    public: Globe,
-  };
-
   if (!showSnippetsPanel) return null;
 
   return (
@@ -127,106 +281,18 @@ export default function SnippetsPanel() {
 
           {/* List */}
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 size={24} className="text-indigo-500 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Lock size={32} className="text-slate-600 mb-3" />
-                <p className="text-slate-400 text-sm">Sign in to view your snippets</p>
-              </div>
-            ) : filteredSnippets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Code2 size={32} className="text-slate-600 mb-3" />
-                <p className="text-slate-400 text-sm">
-                  {search ? 'No matching snippets' : 'No snippets yet'}
-                </p>
-                <p className="text-slate-600 text-xs mt-1">
-                  Save your code using the Save button
-                </p>
-              </div>
-            ) : (
-              filteredSnippets.map((snippet, idx) => {
-                const VisIcon = visibilityIcon[snippet.visibility] || Lock;
-                return (
-                  <motion.div
-                    key={snippet.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    whileHover={{ scale: 1.01, x: 2 }}
-                    onClick={() => loadSnippet(snippet)}
-                    className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-indigo-500/30 cursor-pointer transition-all group"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors truncate flex-1">
-                        {snippet.title}
-                      </h3>
-                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                        <VisIcon size={12} className="text-slate-500" />
-                      </div>
-                    </div>
-
-                    {snippet.description && (
-                      <p className="text-xs text-slate-500 mb-2 line-clamp-2">
-                        {snippet.description}
-                      </p>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-700/50 text-slate-400">
-                          {snippet.language}
-                        </span>
-                        <span className="text-[10px] text-slate-600 flex items-center gap-1">
-                          <Clock size={10} />
-                          {new Date(snippet.updated_at).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {isAuthenticated && (
-                          <>
-                            <button
-                              onClick={(e) => handleStar(e, snippet.id)}
-                              className={`p-1 rounded hover:bg-slate-700 transition-colors ${
-                                snippet.is_starred ? 'text-amber-400' : 'text-slate-500 hover:text-amber-400'
-                              }`}
-                              title="Star"
-                            >
-                              <Star size={12} className={snippet.is_starred ? 'fill-current' : ''} />
-                            </button>
-                            <button
-                              onClick={(e) => handleFork(e, snippet.id)}
-                              className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-indigo-400 transition-colors"
-                              title="Fork"
-                            >
-                              <GitFork size={12} />
-                            </button>
-                            <button
-                              onClick={(e) => handleDelete(e, snippet.id)}
-                              className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-red-400 transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Stars count */}
-                    {snippet.stars_count > 0 && (
-                      <div className="flex items-center gap-1 mt-1.5 text-[10px] text-amber-500/60">
-                        <Star size={10} className="fill-current" />
-                        {snippet.stars_count}
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })
-            )}
+            <SnippetsListContent
+              loading={loading}
+              isAuthenticated={isAuthenticated}
+              filteredSnippets={filteredSnippets}
+              search={search}
+              handlers={{
+                onLoad: loadSnippet,
+                onStar: handleStar,
+                onFork: handleFork,
+                onDelete: handleDelete,
+              }}
+            />
           </div>
         </motion.div>
       </motion.div>

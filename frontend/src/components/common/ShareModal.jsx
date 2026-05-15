@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore, useEditorStore } from '../../store';
-import { X, Share2, Copy, Check, Link, ExternalLink } from 'lucide-react';
+import { X, Share2, Copy, Check, Link } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 

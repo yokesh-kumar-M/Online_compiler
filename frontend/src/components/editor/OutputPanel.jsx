@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEditorStore } from '../../store';
 import {
   Terminal, Type, Trash2, Copy, CheckCircle2, XCircle,
-  Clock, Maximize2, Minimize2, ChevronRight
+  Clock, Maximize2, Minimize2
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -105,15 +105,20 @@ export default function OutputPanel() {
               ref={outputRef}
               className="h-full overflow-y-auto p-4 font-mono text-sm leading-relaxed"
             >
-              {isRunning ? (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-full border-2 border-slate-700 border-t-indigo-500 animate-spin" />
-                    <div className="absolute inset-0 w-12 h-12 rounded-full border-2 border-transparent border-b-purple-500 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-                  </div>
-                  <p className="text-slate-400 text-sm animate-pulse">Executing code...</p>
-                </div>
-              ) : output ? (
+              {(() => {
+                if (isRunning) {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-full gap-3">
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full border-2 border-slate-700 border-t-indigo-500 animate-spin" />
+                        <div className="absolute inset-0 w-12 h-12 rounded-full border-2 border-transparent border-b-purple-500 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+                      </div>
+                      <p className="text-slate-400 text-sm animate-pulse">Executing code...</p>
+                    </div>
+                  );
+                }
+                if (output) {
+                  return (
                 <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
                   {/* Status badge */}
                   <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium mb-3 ${
@@ -135,7 +140,9 @@ export default function OutputPanel() {
                     {output.content}
                   </pre>
                 </motion.div>
-              ) : (
+                  );
+                }
+                return (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center mb-4 border border-indigo-500/20">
                     <Terminal size={28} className="text-indigo-400/60" />
@@ -149,11 +156,11 @@ export default function OutputPanel() {
                     to execute your code
                   </p>
                   <div className="mt-4 flex items-center gap-2 text-[10px] text-slate-600">
-                    <ChevronRight size={10} />
                     <span>Supports Python, JavaScript, C, C++, Java, Go</span>
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </motion.div>
           ) : (
             <motion.div

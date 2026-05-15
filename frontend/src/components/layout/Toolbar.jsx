@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import {
-  Play, Square, ChevronDown, CheckCircle, AlignLeft, Save,
-  Share2, Eraser, Keyboard, BookOpen, FolderOpen, Loader2
+  Play, ChevronDown, CheckCircle, AlignLeft, Save,
+  Share2, Eraser, BookOpen, FolderOpen, Loader2
 } from 'lucide-react';
+import PropTypes from 'prop-types';
 import { useEditorStore, useUIStore, useAuthStore } from '../../store';
 import { LANGUAGE_CONFIG } from '../../utils/constants';
 import { useState, useRef, useEffect } from 'react';
@@ -163,12 +164,14 @@ export default function Toolbar() {
 }
 
 function ToolbarButton({ icon: Icon, label, onClick, shortcut, title }) {
+  const shortcutSuffix = shortcut ? ` (${shortcut})` : '';
+  const computedTitle = title || `${label}${shortcutSuffix}`;
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      title={title || `${label}${shortcut ? ` (${shortcut})` : ''}`}
+      title={computedTitle}
       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 text-sm transition-all"
     >
       <Icon size={14} />
@@ -176,3 +179,17 @@ function ToolbarButton({ icon: Icon, label, onClick, shortcut, title }) {
     </motion.button>
   );
 }
+
+ToolbarButton.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string,
+  onClick: PropTypes.func.isRequired,
+  shortcut: PropTypes.string,
+  title: PropTypes.string,
+};
+
+ToolbarButton.defaultProps = {
+  label: '',
+  shortcut: '',
+  title: '',
+};
