@@ -1,6 +1,7 @@
 # =============================================================================
 # Render Blueprint - Online Compiler Enterprise
-# Deploy: Connect GitHub repo -> Render auto-detects this file
+# Frontend runs on Vercel; this Blueprint provisions only the backend.
+# Deploy: Render Dashboard -> New -> Blueprint -> connect this repo.
 # =============================================================================
 
 databases:
@@ -11,7 +12,7 @@ databases:
     region: oregon
 
 services:
-  # Django Gateway (Docker)
+  # Django Gateway (Docker) — public API
   - type: web
     name: online-compiler-gateway
     plan: free
@@ -38,10 +39,27 @@ services:
         generateValue: true
       - key: EXECUTOR_API_KEY
         generateValue: true
+      # Wire the executor service host into the gateway so it can call /execute.
+      # Django settings.py prepends https:// when the value has no scheme.
+      - key: EXECUTOR_SERVICE_URL
+        fromService:
+          name: online-compiler-executor
+          type: web
+          property: host
+      # Set these AFTER your first Vercel deploy. Examples:
+      #   CORS_ALLOWED_ORIGINS = https://your-app.vercel.app
+      #   CSRF_TRUSTED_ORIGINS = https://your-app.vercel.app
+      #   FRONTEND_URL         = https://your-app.vercel.app
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
       - key: LOG_LEVEL
         value: "WARNING"
 
-  # FastAPI Executor (Docker)
+  # FastAPI Executor (Docker) — private code-execution sandbox
   - type: web
     name: online-compiler-executor
     plan: free

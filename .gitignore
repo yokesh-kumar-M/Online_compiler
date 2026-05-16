@@ -45,3 +45,20 @@ coverage.xml
 # Celery
 celerybeat-schedule
 celerybeat.pid
+
+# Render service env/payload exports (contain secrets — never commit)
+executor_env.json
+executor_payload.json
+gateway_env.json
+gateway_payload.json
+
+# Frontend build output (Vercel handles this)
+frontend/dist/
+frontend/node_modules/
+
+# Claude Code local state
+.claude/
+
+# Local-only scratch / backups
+*.zip
+_local-scratch/

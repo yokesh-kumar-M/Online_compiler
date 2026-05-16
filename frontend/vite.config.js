@@ -8,17 +8,17 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
       '/validate': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
     },
   },
   build: {
-    outDir: process.env.VERCEL ? 'dist' : '../staticfiles/frontend',
+    outDir: 'dist',
     emptyOutDir: true,
   },
 })

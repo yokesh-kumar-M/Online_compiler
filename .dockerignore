@@ -4,6 +4,7 @@
 .gitattributes
 .idea
 .vscode
+.claude
 *.md
 !README.md
 venv
@@ -14,7 +15,6 @@ __pycache__
 .env
 .env.*
 docker-compose.yml
-render.yaml
 nginx
 *.zip
 htmlcov
@@ -22,3 +22,8 @@ htmlcov
 pytest.ini
 setup.cfg
 conftest.py
+# Frontend belongs on Vercel — never ship into the backend image
+frontend
+staticfiles/frontend
+# Don't ship local logs
+logs

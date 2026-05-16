@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// On Vercel, set VITE_API_URL to the full Render gateway base, e.g.
+//   https://online-compiler-gateway-fotz.onrender.com/api/v1
+// Locally (dev), leaving it unset lets the Vite proxy handle /api/v1.
 const baseURL = import.meta.env.VITE_API_URL || '/api/v1';
 
 const api = axios.create({
@@ -26,7 +29,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refresh_token');
       if (refreshToken) {
         try {
-          const { data } = await axios.post('/api/v1/auth/token/refresh/', {
+          const { data } = await axios.post(`${baseURL}/auth/token/refresh/`, {
             refresh: refreshToken,
           });
           localStorage.setItem('access_token', data.access);

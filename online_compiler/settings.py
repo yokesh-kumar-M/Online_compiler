@@ -295,11 +295,7 @@ MAX_OUTPUT_SIZE = int(os.environ.get('MAX_OUTPUT_SIZE', 10000))
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 _static_dir = os.path.join(BASE_DIR, 'static')
-_frontend_static = os.path.join(BASE_DIR, 'staticfiles', 'frontend')
 STATICFILES_DIRS = [d for d in [_static_dir] if os.path.isdir(d)]
-# Add the React build output so development server can serve it
-if os.path.isdir(_frontend_static):
-    STATICFILES_DIRS.append(('frontend', _frontend_static))
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',

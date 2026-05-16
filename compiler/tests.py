@@ -7,10 +7,12 @@ class TestFrontendViews(TestCase):
     def setUp(self):
         self.client = Client()
 
-    def test_index_page_loads(self):
+    def test_index_returns_service_info(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Online Compiler')
+        data = response.json()
+        self.assertEqual(data['service'], 'online-compiler-gateway')
+        self.assertEqual(data['status'], 'ok')
 
     def test_validate_valid_code(self):
         response = self.client.post('/validate/', {'code': 'print("hello")'})

@@ -1,35 +1,26 @@
-"""Frontend views. API views are in views_api.py"""
+"""Frontend-facing views. JSON API views live in views_api.py."""
 import ast
 import os
-from django.shortcuts import render
+
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.conf import settings
-
-
-def _get_frontend_assets():
-    """Discover built React assets from the staticfiles/frontend directory."""
-    frontend_dir = os.path.join(settings.BASE_DIR, 'staticfiles', 'frontend', 'assets')
-    js_file = ''
-    css_file = ''
-
-    if os.path.isdir(frontend_dir):
-        for f in os.listdir(frontend_dir):
-            if f.endswith('.js') and f.startswith('index-'):
-                js_file = f'frontend/assets/{f}'
-            elif f.endswith('.css') and f.startswith('index-'):
-                css_file = f'frontend/assets/{f}'
-
-    return js_file, css_file
 
 
 def index(request):
-    """Render the main compiler page with React frontend."""
-    js_file, css_file = _get_frontend_assets()
-    return render(request, 'compiler/index.html', {
-        'title': 'CodeForge | Online Compiler Enterprise',
-        'js_file': js_file,
-        'css_file': css_file,
+    """Root landing page.
+
+    The React frontend is hosted on Vercel; this Django service is the API.
+    Return a small JSON payload so root hits aren't a 404, and so health
+    probes / curl smoke-tests get a useful response.
+    """
+    frontend_url = os.environ.get('FRONTEND_URL', '')
+    return JsonResponse({
+        'service': 'online-compiler-gateway',
+        'status': 'ok',
+        'frontend': frontend_url or 'configure FRONTEND_URL env var',
+        'docs': request.build_absolute_uri('/api/docs/'),
+        'health': request.build_absolute_uri('/health/'),
     })
 
 
