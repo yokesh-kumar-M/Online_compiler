@@ -111,8 +111,9 @@ class ExecutorClient:
 
         except subprocess.TimeoutExpired:
             return {'success': False, 'output': '', 'error': 'Execution timed out', 'execution_time_ms': settings.CODE_EXECUTION_TIMEOUT * 1000}
-        except Exception as e:
-            return {'success': False, 'output': '', 'error': str(e), 'execution_time_ms': 0}
+        except (OSError, subprocess.SubprocessError) as exc:
+            logger.exception("Local execution failed: %s", exc)
+            return {'success': False, 'output': '', 'error': str(exc), 'execution_time_ms': 0}
 
     def health_check(self) -> bool:
         """Check if executor service is healthy."""
@@ -126,7 +127,8 @@ class ExecutorClient:
             healthy = resp.status_code == 200
             cache.set(cache_key, healthy, timeout=30)
             return healthy
-        except Exception:
+        except requests.RequestException as exc:
+            logger.warning("Executor health check failed: %s", exc)
             cache.set(cache_key, False, timeout=10)
             return False
 

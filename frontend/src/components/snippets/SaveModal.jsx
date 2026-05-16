@@ -118,9 +118,9 @@ export default function SaveModal() {
                 />
               </div>
 
-              <div>
-                <span id="snippet-visibility-label" className="block text-sm text-slate-400 mb-2">Visibility</span>
-                <div className="grid grid-cols-3 gap-2" role="group" aria-labelledby="snippet-visibility-label">
+              <fieldset className="border-0 p-0 m-0">
+                <legend className="block text-sm text-slate-400 mb-2">Visibility</legend>
+                <div className="grid grid-cols-3 gap-2">
                   {visibilityOptions.map(({ value, label, icon: Icon, desc }) => (
                     <button
                       key={value}
@@ -138,7 +138,7 @@ export default function SaveModal() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               <div className="flex items-center gap-2 pt-2">
                 <div className="px-3 py-1 rounded-lg bg-slate-800/80 text-xs text-slate-400 border border-slate-700/30">

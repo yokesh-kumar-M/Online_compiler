@@ -57,8 +57,8 @@ class RateLimitMiddleware:
                     }, status=429)
 
                 cache.set(key, current + 1, timeout=3600)
-            except Exception:
-                pass  # Don't block requests if Redis is down
+            except (ConnectionError, TimeoutError) as exc:
+                logger.warning("Rate limit cache unavailable, skipping check: %s", exc)
 
         return self.get_response(request)
 

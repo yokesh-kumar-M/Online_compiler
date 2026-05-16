@@ -220,7 +220,8 @@ async def _execute_compiled(code: str, language: str, stdin: str, timeout: int, 
                 stderr=asyncio.subprocess.PIPE,
                 cwd=tmpdir,
             )
-            stdout, stderr = await asyncio.wait_for(compile_proc.communicate(), timeout=30)
+            async with asyncio.timeout(30):
+                stdout, stderr = await compile_proc.communicate()
 
             if compile_proc.returncode != 0:
                 return {
@@ -296,7 +297,7 @@ async def execute(req: ExecutionRequest, api_key: str = Depends(verify_api_key))
 
 
 @app.get("/health")
-async def health():
+def health():
     return {"status": "healthy", "service": "executor", "version": "2.0.0"}
 
 

@@ -4,6 +4,7 @@ from django.conf import settings
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User, AuditLog
@@ -84,7 +85,8 @@ class LogoutView(APIView):
                 token.blacklist()
             _log_audit(request.user, AuditLog.Action.LOGOUT, request)
             return Response({'message': 'Logged out successfully.'})
-        except Exception:
+        except (TokenError, InvalidToken) as exc:
+            logger.info("Logout token issue for user %s: %s", request.user.pk, exc)
             return Response({'message': 'Logged out.'})
 
 
